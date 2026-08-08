@@ -21,9 +21,9 @@ tasks = []
 
 
 #Refresh the listbox whenever tasks change
-def view_tasks():
+def refresh_tasks():
     task_list.delete(0, tk.END)
-
+    #If there are no tasks currently 
     if len(tasks) == 0:
         task_list.insert(tk.END, "No tasks to view.")
     else:
@@ -32,21 +32,20 @@ def view_tasks():
                 status = "✓"
             else:
                 status = "✗"
-    
-            task_list.insert(tk.END, f"{i+1}. [{status}] {tasks[i].title}")
 
+            task_list.insert(tk.END, f"{i+1}. [{status}] {tasks[i].title}")
 
 #Allow user to add new tasks
 def add_task():
     title = task_entry.get()
-    
+    #If the user does not enter anything for adding a new task
     if title == "":
         messagebox.showerror("Error", "Task cannot be empty.")
     else:
         task = Task(title)
         tasks.append(task)
         task_entry.delete(0, tk.END)
-        view_tasks()
+        refresh_tasks()
 
 
 #Let user mark a task as complete
@@ -64,7 +63,7 @@ def complete_task():
     
 
     tasks[index].mark_complete()
-    view_tasks()
+    refresh_tasks()
 
 
 #Delete a task
@@ -83,11 +82,12 @@ def delete_task():
     
     index = selection[0]
     tasks.pop(index)
-    view_tasks()
+    refresh_tasks()
 
 
 #GUI
 
+#Main application window
 root = tk.Tk()
 root.title("Productivity App")
 root.geometry("400x400")
@@ -110,6 +110,7 @@ complete_button.pack(pady=5)
 delete_button = tk.Button(root, text="Delete Task", command=delete_task)
 delete_button.pack(pady=5)
 
-view_tasks()
+refresh_tasks()
 
+#The application keeps running until the window is closed.
 root.mainloop()
