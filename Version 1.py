@@ -10,13 +10,13 @@ from tkinter import messagebox
 class Task:
     def __init__(self, title):
         self.title = title
-        # initially all tasks are uncompleted
+        #initially all tasks are not completed
         self.completed = False
 
     def mark_complete(self):
         self.completed = True
 
-
+#Creating an empty list, tasks
 tasks = []
 
 
@@ -27,6 +27,7 @@ def refresh_tasks():
     if len(tasks) == 0:
         task_list.insert(tk.END, "No tasks to view.")
     else:
+     
         for i in range(len(tasks)):
             if tasks[i].completed:
                 status = "✓"
@@ -34,6 +35,7 @@ def refresh_tasks():
                 status = "✗"
 
             task_list.insert(tk.END, f"{i+1}. [{status}] {tasks[i].title}")
+
 
 #Allow user to add new tasks
 def add_task():
@@ -50,6 +52,7 @@ def add_task():
 
 #Let user mark a task as complete
 def complete_task():
+    #task that the user has last clicked (selected)
     selection = task_list.curselection()
     if len(tasks) == 0:
         messagebox.showerror("Error", "No tasks to mark as complete.")
@@ -66,8 +69,9 @@ def complete_task():
     refresh_tasks()
 
 
-#Delete a task
+    
 def delete_task():
+    #Find out which item the user has currently selected 
     selection = task_list.curselection()
     if len(tasks) == 0:
         messagebox.showerror("Error", "No tasks to delete.")
@@ -78,7 +82,7 @@ def delete_task():
         return
 
     
-
+    #deletion of a task
     
     index = selection[0]
     tasks.pop(index)
