@@ -1,30 +1,29 @@
 """ 
-This is version 2 of my productivity application. 
-It incorporates distinct frames to organise the graphical user interface, 
-making the application appear more professional to navigate. Tasks are categorized 
-according to their type and their priority rating to give the user more insight. 
-The application also uses a calendar for selecting deadlines. 
-Pack method will be used to organize the layout. 
+This is version 2 of my productivity application.  It incorporates distinct frames to better organise the graphical user interface, 
+making the application appear more professional to navigate. Tasks are given time allocationsand are categorized  according
+to their type and their priority rating to give the user more insight. The application also uses a calendar for selecting deadlines. 
+The pack method is used to organize the layout of widgets in each frame. Users are now asked for their name for a more personalized
+experience, as well as their age to ensure that people of the appropriate age are utilizing the application.
 """ 
 
 import tkinter as tk 
-#Messagebox to display errors in user input 
+#Messagebox to display important messages to the user 
 from tkinter import messagebox 
 #Calendar for the user to input the due date of their tasks 
 from tkcalendar import Calendar 
 #Allowing the application to know the current date 
 from datetime import datetime, date 
  
-#Creating the Task class, giving each task attributes 
+#Creating the Task class, giving each object (task) attributes 
 class Task: 
-    def __init__(self, title, time, deadline, importance, category): 
+    def __init__(self, title, time, deadline, importance, category): #Initialising each task's attributes
         self.title = title 
         self.time = time 
         self.deadline = deadline 
         self.importance = importance 
         self.category = category 
  
-        #Initially all tasks are uncompleted 
+        #Completed attribute: Initially all tasks are uncompleted 
         self.completed = False 
  
     #Method used to change a task's completion status 
@@ -70,10 +69,10 @@ def open_calendar():
     calendar_window.title("Select Deadline") 
     calendar_window.geometry("300x300") 
  
-    #Get the current date 
+    #Getting the current date 
     today = date.today() 
  
-    #Create the calendar 
+    #Creating the calendar 
     calendar = Calendar( 
         calendar_window, 
         selectmode="day", 
@@ -97,14 +96,14 @@ def open_calendar():
     ) 
     select_button.pack(pady=10) 
  
-#Check the user's name and age before allowing access to the application 
+#Check the user's name and age before giving access to the application 
 def check_user():
-    #allow the user's name to be accessed by other functions
+    #Allow the user's name to be accessed by the rest of the program
     global user_name 
  
     #Get information entered by the user 
-    name = name_entry.get().strip() 
-    age = age_entry.get().strip()#Currently gets age as a string, will be converted to integer later. 
+    name = name_entry.get().strip()#.strip() removes accidental spaces
+    age = age_entry.get().strip()#Currently gets age as a string, this will be converted to integer later. 
  
     #Check that a name is entered 
     if name == "": 
@@ -122,16 +121,28 @@ def check_user():
         ) 
         return 
  
-    #Check that the age entered is a number 
+    #Check that the age entered is a integer 
     if not age.isdigit(): 
         messagebox.showerror( 
             "Error", 
-            "Age must be a number." 
+            "Age must be an integer." 
         ) 
-        return 
+        return
+
+    #converts age from a string to an integer
+    age = int(age)
  
+   
+    #Check that the age entered is realistic 
+    if age > 120: 
+        messagebox.showerror( 
+            "Invalid age", 
+            "Please enter your real age." 
+        ) 
+        return
+
     #Check that the user is old enough to use the application 
-    if int(age) < 12: #int(age) converts age from a string to an integer
+    if age < 12: 
         messagebox.showerror( 
             "Access denied", 
             "You must be at least 12 years old to use this application." 
@@ -139,18 +150,11 @@ def check_user():
         root.destroy() 
         return
 
-    #Check that the age entered is realistic 
-    if int(age) > 120: 
-        messagebox.showerror( 
-            "Invalid age", 
-            "Please enter your real age." 
-        ) 
-        return
  
-    #Store the user's name so it can be used by the other frames 
+    #Store the user's name so it can be used anywhere in the program
     user_name = name 
  
-    #Change the large headings to greet the user by name 
+    #Change the headings to greet the user by name 
     main_title.config( 
         text=f"WELCOME, {user_name.upper()}!" 
     ) 
@@ -195,7 +199,7 @@ def add_task():
     if not time.isdigit(): 
         messagebox.showerror( 
             "Error", 
-            "Time allocation must be a number." 
+            "Time allocation must be an integer." 
         ) 
         return 
  
@@ -218,7 +222,7 @@ def add_task():
         ) 
         return 
  
-    #Check that deadline is a valid date 
+    #Check that deadline is a valid date in the correct format
     try: 
         deadline_date = datetime.strptime( 
             deadline, 
@@ -231,7 +235,7 @@ def add_task():
         ) 
         return 
  
-    #Check deadline is not before today 
+    #Check that the deadline is not before today 
     if deadline_date < date.today(): 
         messagebox.showerror( 
             "Error", 
@@ -239,14 +243,8 @@ def add_task():
         ) 
         return 
  
-    #Create a new Task object using the user's input 
-    task = Task( 
-        title, 
-        time, 
-        deadline, 
-        importance, 
-        category 
-    ) 
+    #Create a new Task object using the user's inputs
+    task = Task(title, time, deadline, importance, category) 
  
     #Add the new Task object to the list so it can later be displayed, completed or deleted 
     tasks.append(task) 
@@ -256,7 +254,7 @@ def add_task():
     time_entry.delete(0, tk.END) 
     deadline_entry.delete(0, tk.END) 
  
-    #Return the cursor to the task entry box 
+    #Return the cursor to the task entry box by default
     task_entry.focus() 
  
     messagebox.showinfo( 
@@ -268,7 +266,7 @@ def add_task():
 def complete_task(): 
     #Find out which item the user has currently selected 
     selection = task_list.curselection() 
- 
+    #Identify if there are no current tasks
     if len(tasks) == 0: 
         messagebox.showerror( 
             "Error", 
@@ -303,7 +301,7 @@ def delete_task():
         ) 
         return 
  
-    #Check if the user has selected a task 
+    #Check whether the user has selected a task 
     if not selection: 
         messagebox.showerror( 
             "Error", 
@@ -681,7 +679,7 @@ delete_button = tk.Button(
 delete_button.pack(pady=5) 
  
 #Button to return to the main menu 
-back_from_tasks_button = tk.Button( 
+back_button = tk.Button( 
     tasks_frame, 
     text="BACK", 
     font=("Arial", 13, "bold"), 
@@ -689,9 +687,9 @@ back_from_tasks_button = tk.Button(
     height=2, 
     command=show_main_frame 
 ) 
-back_from_tasks_button.pack(pady=15) 
+back_button.pack(pady=15) 
  
-#Show the user information screen when the application starts 
+#Show the user the information screen when the application starts 
 setup_frame.tkraise() 
 name_entry.focus() 
  
