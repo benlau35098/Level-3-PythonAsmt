@@ -3,12 +3,14 @@ It uses Tkinter to provide a graphical user interface while
 containing basic task management features.'''
 
 import tkinter as tk
+#messagebox to display errors in user input
 from tkinter import messagebox
 
 
-#Creating the Task class, giving each task attributes
+#Creating the Task class, a blueprint for each task object 
 class Task:
-    def __init__(self, title):
+    
+    def __init__(self, title):#giving each task attributes:
         self.title = title
         #initially all tasks are not completed
         self.completed = False
