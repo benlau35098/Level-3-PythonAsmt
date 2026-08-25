@@ -1,6 +1,6 @@
 """ 
 This is version 2 of my productivity application.  It incorporates distinct frames to better organise the graphical user interface, 
-making the application appear more professional to navigate. Tasks are given time allocationsand are categorized  according
+making the application appear more professional to navigate. Tasks are given time allocations and are categorized according
 to their type and their priority rating to give the user more insight. The application also uses a calendar for selecting deadlines. 
 The pack method is used to organize the layout of widgets in each frame. Users are now asked for their name for a more personalized
 experience, as well as their age to ensure that people of the appropriate age are utilizing the application.
@@ -16,14 +16,16 @@ from datetime import datetime, date
  
 #Creating the Task class, giving each object (task) attributes 
 class Task: 
-    def __init__(self, title, time, deadline, importance, category): #Initialising each task's attributes
+    def __init__(self, title, time, deadline, importance, category): #task attributes being initialized
+
+        #Stores the task title as an attribute of the task object, so each task can have its own title.
         self.title = title 
         self.time = time 
         self.deadline = deadline 
         self.importance = importance 
         self.category = category 
  
-        #Completed attribute: Initially all tasks are uncompleted 
+        #Completed attribute, initially all tasks are not yet completed
         self.completed = False 
  
     #Method used to change a task's completion status 
@@ -33,7 +35,7 @@ class Task:
 #Creating an empty list for tasks to be added to or removed from 
 tasks = [] 
  
-#Stores the name of the user so it can be displayed throughout the application 
+#Storing the name of the user so it can be displayed throughout the application 
 user_name = "" 
  
 #Refresh the listbox whenever tasks change 
@@ -264,7 +266,7 @@ def add_task():
  
 #Let user mark a task as complete 
 def complete_task(): 
-    #Find out which item the user has currently selected 
+    #curselection returns the task the user has currently selected as a tuple
     selection = task_list.curselection() 
     #Identify if there are no current tasks
     if len(tasks) == 0: 
