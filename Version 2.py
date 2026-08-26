@@ -67,7 +67,7 @@ def refresh_tasks():
  
 #Open the calendar 
 def open_calendar(): 
-    calendar_window = tk.Toplevel(root)#creates a new window for calendar 
+    calendar_window = tk.Toplevel(root)#creates a new window for the calendar 
     calendar_window.title("Select Deadline") 
     calendar_window.geometry("300x300") 
  
