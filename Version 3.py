@@ -2,7 +2,8 @@
 This is version 3 of my productivity application. It allows tasks to be saved to a 
 JSON file so they remain available when the application is closed and reopened. Users 
 can also edit tasks, sort them by importance, mark them as complete or incomplete, add 
-them from the task viewing screen, and confirm before deleting them. 
+them from the task viewing screen, view them from the task adding screen and confirm
+before deleting them. 
 """
 
 import tkinter as tk
@@ -147,7 +148,7 @@ def sort_tasks():
 def open_calendar():
     global calendar_window
 
-    #If a calendar is already open, bring it to the front instead of creating another calendar window
+    #If a calendar is already open, bring it to the front on click and do not create another calendar window
     if calendar_window is not None and calendar_window.winfo_exists():
         calendar_window.lift()
         calendar_window.focus_force()
@@ -160,7 +161,7 @@ def open_calendar():
     #Get the current date
     today = date.today()
 
-    #Create the calendar
+    #Creating the calendar
     calendar = Calendar(
         calendar_window,
         selectmode="day",
@@ -169,7 +170,7 @@ def open_calendar():
     )
     calendar.pack(pady=20)
 
-    #Save the selected date
+    #Saving the selected date
     def select_date():
         global calendar_window
 
@@ -230,13 +231,14 @@ def check_user():
         return
 
     #Store the user's name so it can be used by the other frames
-    #This also identifies which tasks should be loaded from the JSON file
+    #This also identifies which tasks should be loaded from the JSON file to the application
     user_name = name
 
     #Clear any tasks left over from a previous user in this session
     tasks.clear()
 
-    #Load this user's own saved tasks from the shared file, if any exist
+    #Load tasks for the specific user after their name has been entered
+    #This prevents tasks from being loaded before the user's name is known
     load_tasks()
 
     #Change the headings to greet the user by name
@@ -947,9 +949,6 @@ back_from_tasks_button = tk.Button(
     command=show_main_frame
 )
 back_from_tasks_button.pack(pady=10)
-
-#Tasks are loaded for a specific user inside check_user(), once we know who is using the application
-#This prevents tasks from being loaded before the user's name has been entered
 
 #Show the user information screen when the application starts
 setup_frame.tkraise()
