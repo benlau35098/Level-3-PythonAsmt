@@ -1,11 +1,10 @@
 """
-This is version 3 of my productivity application.
-It allows tasks to be saved to a JSON file so they
-remain available when the application is reopened.
-Users can also edit tasks, sort tasks by importance,
-mark tasks as complete or incomplete, add tasks from
-the task viewing screen, and confirm before deleting them.
+This is version 3 of my productivity application. It allows tasks to be saved to a 
+JSON file so they remain available when the application is closed and reopened. Users 
+can also edit tasks, sort them by importance, mark them as complete or incomplete, add 
+them from the task viewing screen, and confirm before deleting them. 
 """
+
 import tkinter as tk
 #Messagebox to display errors in user input
 from tkinter import messagebox
@@ -16,7 +15,7 @@ from datetime import datetime, date
 #JSON for storing tasks between application sessions
 import json
 
-#Creating the Task class, giving each task attributes
+#Creating the Task class, giving each task its attributes
 class Task:
     def __init__(self, title, time, deadline, importance, category):
         self.title = title
@@ -24,6 +23,7 @@ class Task:
         self.deadline = deadline
         self.importance = importance
         self.category = category
+
         #Initially all tasks are uncompleted
         self.completed = False
 
@@ -34,30 +34,43 @@ class Task:
 
 #Creating an empty list for tasks to be added to or removed from
 tasks = []
+
 #Stores the name of the user so it can be displayed throughout the application
 user_name = ""
+
 #Stores the name of the JSON file used to save tasks
-#This is set once the user enters their name, so each user gets their own file
-#and does not see or overwrite another user's tasks
+#All users share this file, with tasks grouped inside it by user name
 FILE_NAME = "tasks.json"
+
 #Stores the index of the task currently being edited
 editing_index = None
+
 #Stores the current calendar window so multiple calendars cannot be opened
 calendar_window = None
 
-#Turn the user's entered name into a safe file name
-def get_file_name_for_user(name):
-    #Replace spaces with underscores and remove characters that
-    #are not letters, numbers or underscores
-    safe_name = "".join(
-        char if char.isalnum() or char == " " else ""
-        for char in name
-    ).strip().lower().replace(" ", "_")
-    return f"tasks_{safe_name}.json"
+#Load the full contents of the JSON file, grouped by user name
+def load_all_data():
+    try:
+        with open(FILE_NAME, "r") as file:
+            data = json.load(file)
+
+        #The JSON structure is a dictionary where each username is linked to that user's list of saved tasks
+        if not isinstance(data, dict):
+            #Checks if the data is not a dictionary in unexpected events
+            return {}
+
+        return data
+    except (FileNotFoundError, json.JSONDecodeError):
+        #Start with no data if the file is missing or invalid
+        return {}
 
 #Save the current tasks to the JSON file
 def save_tasks():
+    #Load the existing users first so saving one user does not remove the tasks belonging to other users
+    all_data = load_all_data()
+
     task_data = []
+
     #Loop through every Task object so its attributes can be stored
     for task in tasks:
         task_data.append({
@@ -68,35 +81,39 @@ def save_tasks():
             "category": task.category,
             "completed": task.completed
         })
+
+    #Store this user's task list under their username while keeping the other users' task lists in the dictionary
+    all_data[user_name] = task_data
+
     #Open the JSON file so the current task data can be written to it
     with open(FILE_NAME, "w") as file:
-        json.dump(task_data, file, indent=4)
+        json.dump(all_data, file, indent=4)
 
 #Load previously saved tasks from the JSON file
 def load_tasks():
-    try:
-        #Open the JSON file containing the saved tasks
-        with open(FILE_NAME, "r") as file:
-            task_data = json.load(file)
-        #Create a Task object for each saved task
-        for data in task_data:
-            task = Task(
-                data["title"],
-                data["time"],
-                data["deadline"],
-                data["importance"],
-                data["category"]
-            )
-            #Restore whether the task was completed
-            task.completed = data["completed"]
-            tasks.append(task)
-    except (FileNotFoundError, json.JSONDecodeError):
-        #Start with an empty task list if the file is missing or invalid
-        pass
+    all_data = load_all_data()
+
+    #Only load the tasks that belong to this user
+    user_tasks = all_data.get(user_name, [])
+
+    #Create a Task object for each saved task
+    for data in user_tasks:
+        task = Task(
+            data["title"],
+            data["time"],
+            data["deadline"],
+            data["importance"],
+            data["category"]
+        )
+
+        #Restore whether the task was completed
+        task.completed = data["completed"]
+        tasks.append(task)
 
 #Refresh the listbox whenever tasks change
 def refresh_tasks():
     task_list.delete(0, tk.END)
+
     #If there are no tasks currently
     if len(tasks) == 0:
         task_list.insert(tk.END, "NO TASKS TO VIEW.")
@@ -108,6 +125,7 @@ def refresh_tasks():
                 status = "✓"
             else:
                 status = "✗"
+
             #Display the task information using the attributes stored in each object
             task_list.insert(
                 tk.END,
@@ -120,14 +138,16 @@ def refresh_tasks():
 
 #Sort tasks from highest to lowest importance
 def sort_tasks():
-    #Sort the task objects using their importance attribute
+    #The lambda uses each Task object's importance as the value to sort by
+    #reverse=True places the highest importance values first
     tasks.sort(key=lambda task: task.importance, reverse=True)
     refresh_tasks()
 
 #Open the calendar
 def open_calendar():
     global calendar_window
-    #If a calendar is already open, bring it to the front instead
+
+    #If a calendar is already open, bring it to the front instead of creating another calendar window
     if calendar_window is not None and calendar_window.winfo_exists():
         calendar_window.lift()
         calendar_window.focus_force()
@@ -136,8 +156,10 @@ def open_calendar():
     calendar_window = tk.Toplevel(root)
     calendar_window.title("Select Deadline")
     calendar_window.geometry("300x300")
+
     #Get the current date
     today = date.today()
+
     #Create the calendar
     calendar = Calendar(
         calendar_window,
@@ -150,6 +172,7 @@ def open_calendar():
     #Save the selected date
     def select_date():
         global calendar_window
+
         deadline_entry.delete(0, tk.END)
         deadline_entry.insert(0, calendar.get_date())
         calendar_window.destroy()
@@ -168,22 +191,27 @@ def open_calendar():
 
 #Check the user's name and age before allowing access to the application
 def check_user():
-    global user_name, FILE_NAME
+    global user_name
+
     #Get information entered by the user
     name = name_entry.get().strip()
     age = age_entry.get().strip()
+
     #Check that a name is entered
     if name == "":
         messagebox.showerror("Error", "Please enter your name.")
         return
+
     #Check that an age is entered
     if age == "":
         messagebox.showerror("Error", "Please enter your age.")
         return
-    #Check that the age entered is a number
+
+    #Check that the age entered is an integer
     if not age.isdigit():
-        messagebox.showerror("Error", "Age must be a number.")
+        messagebox.showerror("Error", "Please enter a whole number as your age.")
         return
+
     #Check that the user is old enough to use the application
     if int(age) < 12:
         messagebox.showerror(
@@ -192,6 +220,7 @@ def check_user():
         )
         root.destroy()
         return
+
     #Check that the age entered is realistic
     if int(age) > 120:
         messagebox.showerror(
@@ -199,20 +228,24 @@ def check_user():
             "Please enter your real age."
         )
         return
+
     #Store the user's name so it can be used by the other frames
+    #This also identifies which tasks should be loaded from the JSON file
     user_name = name
-    #Work out which JSON file belongs to this user
-    FILE_NAME = get_file_name_for_user(user_name)
+
     #Clear any tasks left over from a previous user in this session
     tasks.clear()
-    #Load this user's own saved tasks, if any exist
+
+    #Load this user's own saved tasks from the shared file, if any exist
     load_tasks()
+
     #Change the headings to greet the user by name
     main_title.config(text=f"WELCOME, {user_name.upper()}!")
     add_title.config(
         text=f"ADD A TASK YOU WISH TO COMPLETE, {user_name.upper()}"
     )
     tasks_title.config(text=f"{user_name.upper()}'S TASKS")
+
     #Show the main menu after the user's information has been accepted
     show_main_frame()
 
@@ -224,10 +257,13 @@ def validate_task_input():
     deadline = deadline_entry.get().strip()
     importance = len(importance_var.get())
     category = category_var.get()
+
     #If the user does not enter anything for the task
     if title == "":
         messagebox.showerror("Error", "Task cannot be empty.")
+        #Stop the function when the task information is invalid
         return None
+
     #Check that a time has been entered
     if time == "":
         messagebox.showerror(
@@ -235,6 +271,7 @@ def validate_task_input():
             "Please enter how long you think this task will take."
         )
         return None
+
     #Check that the time entered is a number
     if not time.isdigit():
         messagebox.showerror(
@@ -242,6 +279,7 @@ def validate_task_input():
             "Time allocation must be a number."
         )
         return None
+
     #Check that the time entered is greater than zero
     if int(time) <= 0:
         messagebox.showerror(
@@ -249,8 +287,10 @@ def validate_task_input():
             "Time allocation must be greater than zero."
         )
         return None
+
     #Convert the time to an integer
     time = int(time)
+
     #Check that a deadline has been entered
     if deadline == "":
         messagebox.showerror(
@@ -258,6 +298,7 @@ def validate_task_input():
             "Please select a date from the calendar or type one manually."
         )
         return None
+
     #Check that the deadline is a valid date
     try:
         deadline_date = datetime.strptime(
@@ -270,6 +311,7 @@ def validate_task_input():
             "Please enter a valid date in DD/MM/YYYY format."
         )
         return None
+
     #Check that the deadline is not before today
     if deadline_date < date.today():
         messagebox.showerror(
@@ -277,14 +319,17 @@ def validate_task_input():
             "The deadline cannot be before today."
         )
         return None
+
     return title, time, deadline, importance, category
 
 #Allow user to add new tasks
 def add_task():
     #Get validated task information
     task_data = validate_task_input()
+
     if task_data is None:
         return
+
     #Create a new Task object using the user's input
     task = Task(
         task_data[0],
@@ -293,24 +338,32 @@ def add_task():
         task_data[3],
         task_data[4]
     )
+
     #Add the new Task object to the list
     tasks.append(task)
-    #Save the updated task list to the JSON file
-    save_tasks()
+
     #Clear the input fields after adding the task
     clear_task_fields()
+
     #Return the cursor to the task entry box
     task_entry.focus()
+
+    #Save the task list after a task has been added, edited, completed, or deleted
+    save_tasks()
+
     messagebox.showinfo("Success", "Task added successfully.")
 
 #Open the selected task for editing
 def edit_task():
     global editing_index
+
     #Find out which item the user has currently selected
     selection = task_list.curselection()
+
     if len(tasks) == 0:
         messagebox.showerror("Error", "No tasks to edit.")
         return
+
     #Check if the user has selected a task
     if not selection:
         messagebox.showerror(
@@ -318,51 +371,68 @@ def edit_task():
             "Please select a task to edit."
         )
         return
+
     #curselection returns the selected Listbox position as a tuple
     #The first value gives the position of the selected task
     editing_index = selection[0]
-    #Get the selected Task object
+
+    #The Listbox position corresponds to the same position in the tasks list
+    #This allows the selected Task object to be found and edited
     selected_task = tasks[editing_index]
+
     #Put the existing information into the input fields
     task_entry.delete(0, tk.END)
     task_entry.insert(0, selected_task.title)
+
     time_entry.delete(0, tk.END)
     time_entry.insert(0, selected_task.time)
+
     deadline_entry.delete(0, tk.END)
     deadline_entry.insert(0, selected_task.deadline)
+
     importance_var.set("★" * selected_task.importance)
     category_var.set(selected_task.category)
+
     #Change the button so it saves the edited task
     add_button.config(
         text="SAVE CHANGES",
         command=save_edit
     )
+
     add_title.config(
         text=f"EDIT A TASK, {user_name.upper()}"
     )
+
     show_add_frame()
 
 #Save changes made to an existing task
 def save_edit():
     #Get validated task information
     task_data = validate_task_input()
+
     if task_data is None:
         return
-    #Get the Task object being edited
+
+    #Get the Task object being edited using the index saved by edit_task
     task = tasks[editing_index]
+
     #Update the object's attributes
     task.title = task_data[0]
     task.time = task_data[1]
     task.deadline = task_data[2]
     task.importance = task_data[3]
     task.category = task_data[4]
-    #Save the updated task list
-    save_tasks()
+
     #Clear the input fields
     clear_task_fields()
+
     #Reset the button to its normal add-task function
     reset_add_screen()
+
+    save_tasks()
+
     messagebox.showinfo("Success", "Task updated successfully.")
+
     show_tasks_frame()
 
 #Clear the task input fields
@@ -376,11 +446,14 @@ def clear_task_fields():
 #Reset the add task screen after editing
 def reset_add_screen():
     global editing_index
+
     editing_index = None
+
     add_button.config(
         text="ADD TASK",
         command=add_task
     )
+
     add_title.config(
         text=f"ADD A TASK YOU WISH TO COMPLETE, {user_name.upper()}"
     )
@@ -389,9 +462,11 @@ def reset_add_screen():
 def complete_task():
     #Find out which item the user has currently selected
     selection = task_list.curselection()
+
     if len(tasks) == 0:
         messagebox.showerror("Error", "There are no tasks.")
         return
+
     #Check if the user has selected a task
     if not selection:
         messagebox.showerror(
@@ -399,11 +474,13 @@ def complete_task():
             "Please select a task first."
         )
         return
+
     #Get the index of the selected task
     index = selection[0]
+
     #Call the method to switch between complete and incomplete
     tasks[index].mark_complete()
-    #Save the updated task
+
     save_tasks()
     refresh_tasks()
 
@@ -411,9 +488,11 @@ def complete_task():
 def delete_task():
     #Find out which item the user has currently selected
     selection = task_list.curselection()
+
     if len(tasks) == 0:
         messagebox.showerror("Error", "No tasks to delete.")
         return
+
     #Check if the user has selected a task
     if not selection:
         messagebox.showerror(
@@ -421,17 +500,20 @@ def delete_task():
             "Please select a task to delete."
         )
         return
+
     #Get the index of the selected task
     index = selection[0]
+
     #Ask the user to confirm deletion
     answer = messagebox.askyesno(
         "Confirm deletion",
         "Are you sure you want to delete this task?"
     )
+
     if answer:
         #Remove the selected task
         tasks.pop(index)
-        #Save the updated task list
+
         save_tasks()
         refresh_tasks()
 
@@ -447,6 +529,7 @@ def exit_application():
         "Exit",
         "Are you sure you want to exit?"
     )
+
     if answer:
         root.destroy()
 
@@ -502,7 +585,6 @@ name_label = tk.Label(
 )
 name_label.pack()
 
-#Name entry
 name_entry = tk.Entry(
     setup_frame,
     width=30,
@@ -519,7 +601,6 @@ age_label = tk.Label(
 )
 age_label.pack(pady=(10, 0))
 
-#Age entry
 age_entry = tk.Entry(
     setup_frame,
     width=30,
@@ -727,8 +808,10 @@ category_menu = tk.OptionMenu(
     "Home",
     "Fitness",
     "Family",
+    "Personal",
     "Other"
 )
+
 category_menu.config(
     font=("Arial", 12),
     width=22,
@@ -746,6 +829,17 @@ add_button = tk.Button(
     command=add_task
 )
 add_button.pack(pady=8)
+
+#Button to view tasks from the add task screen
+view_tasks_from_add_button = tk.Button(
+    add_frame,
+    text="VIEW TASKS",
+    font=("Arial", 13, "bold"),
+    width=22,
+    height=2,
+    command=show_tasks_frame
+)
+view_tasks_from_add_button.pack(pady=5)
 
 #Button to return to the main menu
 back_from_add_button = tk.Button(
@@ -854,8 +948,8 @@ back_from_tasks_button = tk.Button(
 )
 back_from_tasks_button.pack(pady=10)
 
-#Tasks are now loaded per-user inside check_user(), once we know
-#who is using the application, instead of being loaded here
+#Tasks are loaded for a specific user inside check_user(), once we know who is using the application
+#This prevents tasks from being loaded before the user's name has been entered
 
 #Show the user information screen when the application starts
 setup_frame.tkraise()
